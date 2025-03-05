@@ -37,9 +37,9 @@ const googleCallback = async (req, res) => {
     const { id: googleId, email, name } = userInfo;
 
     // Check if the user already exists in DB
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ googleId });
     if (!user) {
-      user = new User({ googleId, email, name });
+      user = new User({ googleId, email, name, userId: googleId });
       await user.save();
     }
 
@@ -56,7 +56,6 @@ const googleCallback = async (req, res) => {
 const logoutUser = (req, res) => {
   res.json({ message: "Logged out successfully" });
 };
-
 
 const getUserProfile = (req, res) => {
   try {

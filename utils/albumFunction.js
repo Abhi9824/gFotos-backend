@@ -1,4 +1,5 @@
 const { Album } = require("../models/album.models");
+const { User } = require("../models/user.models");
 const mongoose = require("mongoose");
 
 const createAlbum = async (req) => {
@@ -12,7 +13,7 @@ const createAlbum = async (req) => {
   const album = new Album({
     name,
     description,
-    ownerId: req.user.userId, 
+    ownerId: req.user.userId,
   });
 
   await album.save();
@@ -35,11 +36,9 @@ const updateAlbumDescription = async (req) => {
   await album.save();
   return album;
 };
-
-// Share Album
 const shareAlbum = async (req) => {
   const { albumId } = req.params;
-  const { emails } = req.body;
+  let { emails } = req.body;
 
   const album = await Album.findById(albumId);
   if (!album) throw new Error("Album not found");
@@ -48,10 +47,29 @@ const shareAlbum = async (req) => {
     throw new Error("You are not the owner of this album");
   }
 
-  album.sharedUsers = [...album.sharedUsers, ...emails];
+  // Convert single email to an array if needed
+  if (!Array.isArray(emails)) {
+    emails = [emails];
+  }
+
+  // Find users by email and get their ObjectId
+  const users = await User.find({ email: { $in: emails } }, "_id email");
+  const userIds = users.map((user) => user._id); // Extract ObjectId values
+
+  // Merge with existing sharedUsers and remove duplicates
+  album.sharedUsers = [...new Set([...album.sharedUsers, ...userIds])];
+
   await album.save();
-  return album;
+
+  // Populate sharedUsers with email info before returning
+  const populatedAlbum = await Album.findById(albumId).populate(
+    "sharedUsers",
+    "email"
+  );
+
+  return populatedAlbum;
 };
+
 // Delete Album
 const deleteAlbum = async (req) => {
   const { albumId } = req.params;
