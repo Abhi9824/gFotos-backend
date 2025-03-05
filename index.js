@@ -38,7 +38,6 @@ const {
 } = require("./utils/imageFunction");
 
 const { verifyAccessToken } = require("./middleware/authMiddleware");
-const { image } = require("./cloudinary/cloudinary.config");
 const { upload } = require("./middleware/multer.middleware");
 
 const corsOption = {
